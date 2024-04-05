@@ -35,6 +35,40 @@ pub inline fn ReturnType(comptime func: anytype) type {
     }
 }
 
+test "ReturnType" {
+    const S = struct {
+        a: ?i32 = null,
+        b: ?u8 = null,
+    };
+
+    const foo = (struct {
+        fn foo() S {
+            return S{};
+        }
+    }).foo;
+
+    const bar = (struct {
+        fn bar() ?S {
+            return null;
+        }
+    }).bar;
+
+    try testing.expectEqual(ReturnType(foo), S);
+    try testing.expectEqual(ReturnType(bar), ?S);
+}
+
+test "ReturnType_with_ErrorUnion_and_Optional" {
+    const SomeError = error{ReallyBadError};
+
+    const foo = (struct {
+        pub fn foo() SomeError!?bool {
+            return true;
+        }
+    }).foo;
+
+    try testing.expectEqual(ReturnType(foo), SomeError!?bool);
+}
+
 /// Returns the type of the parameter of `func` at index `param_idx`.
 pub inline fn ParamType(comptime func: anytype, comptime param_idx: usize) type {
     comptime {
@@ -71,26 +105,4 @@ test "ParamType" {
     try testing.expectEqual(ParamType(foo, 1), u32);
     try testing.expectEqual(ParamType(foo, 2), void);
     try testing.expectEqual(ParamType(foo, 3), S);
-}
-
-test "ReturnType" {
-    const S = struct {
-        a: ?i32 = null,
-        b: ?u8 = null,
-    };
-
-    const foo = (struct {
-        fn foo() S {
-            return S{};
-        }
-    }).foo;
-
-    const bar = (struct {
-        fn bar() ?S {
-            return null;
-        }
-    }).bar;
-
-    try testing.expectEqual(ReturnType(foo), S);
-    try testing.expectEqual(ReturnType(bar), ?S);
 }

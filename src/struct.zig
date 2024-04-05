@@ -25,6 +25,7 @@ inline fn getField(comptime T: type, comptime field: meta.FieldEnum(T)) Type.Str
     }
 }
 
+/// Returns a new type where every field is optional.
 pub inline fn Partial(comptime T: type) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -64,6 +65,30 @@ pub inline fn Partial(comptime T: type) type {
     }
 }
 
+test "Partial" {
+    const S = struct {
+        a: i32,
+        b: ?u64,
+        c: *const anyopaque,
+    };
+
+    const type_info = @typeInfo(Partial(S));
+
+    switch (type_info) {
+        .Struct => |s| {
+            comptime {
+                for (s.fields) |field| {
+                    const field_type_info = @typeInfo(field.type);
+
+                    try testing.expect(field_type_info == .Optional);
+                }
+            }
+        },
+        else => unreachable,
+    }
+}
+
+/// Return a new type with only fields specificed in `fields` picked out.
 pub inline fn Pick(comptime T: type, comptime fields: []const meta.FieldEnum(T)) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -92,6 +117,21 @@ pub inline fn Pick(comptime T: type, comptime fields: []const meta.FieldEnum(T))
     }
 }
 
+test "Pick" {
+    const S = struct {
+        a: i32,
+        b: ?u64,
+        c: *const anyopaque,
+    };
+
+    const T = Pick(S, &.{ .a, .c });
+
+    const field_names = meta.fieldNames(T);
+
+    try testing.expectEqualSlices([]u8, @ptrCast(field_names), @ptrCast(&[_][]const u8{ "a", "c" }));
+}
+
+/// Return a new type with fields specified in `fields` have been omitted.
 pub inline fn Omit(comptime T: type, comptime fields: []const meta.FieldEnum(T)) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -128,43 +168,6 @@ pub inline fn Omit(comptime T: type, comptime fields: []const meta.FieldEnum(T))
             else => unreachable,
         }
     }
-}
-
-test "Partial" {
-    const S = struct {
-        a: i32,
-        b: ?u64,
-        c: *const anyopaque,
-    };
-
-    const type_info = @typeInfo(Partial(S));
-
-    switch (type_info) {
-        .Struct => |s| {
-            comptime {
-                for (s.fields) |field| {
-                    const field_type_info = @typeInfo(field.type);
-
-                    try testing.expect(field_type_info == .Optional);
-                }
-            }
-        },
-        else => unreachable,
-    }
-}
-
-test "Pick" {
-    const S = struct {
-        a: i32,
-        b: ?u64,
-        c: *const anyopaque,
-    };
-
-    const T = Pick(S, &.{ .a, .c });
-
-    const field_names = meta.fieldNames(T);
-
-    try testing.expectEqualSlices([]u8, @ptrCast(field_names), @ptrCast(&[_][]const u8{ "a", "c" }));
 }
 
 test "Omit" {

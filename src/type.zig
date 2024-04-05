@@ -3,6 +3,7 @@ const ReturnType = @import("function.zig").ReturnType;
 const testing = std.testing;
 const Type = std.builtin.Type;
 
+/// Returns new type that is not optional.
 pub inline fn NonOptional(comptime T: type) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -14,6 +15,17 @@ pub inline fn NonOptional(comptime T: type) type {
     }
 }
 
+test "NonOptional" {
+    const S = struct {
+        a: i32,
+        b: ?u64,
+        c: *const anyopaque,
+    };
+
+    try testing.expectEqual(NonOptional(?S), S);
+}
+
+/// Returns new type that has no error union.
 pub inline fn NonError(comptime T: type) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -23,27 +35,6 @@ pub inline fn NonError(comptime T: type) type {
             else => @compileError("Can't remove error type from " ++ @typeName(T) ++ " as it is does not have an error union."),
         }
     }
-}
-
-pub inline fn NonPointer(comptime T: type) type {
-    comptime {
-        const type_info = @typeInfo(T);
-
-        switch (type_info) {
-            inline .Pointer => |ptr| return ptr.child,
-            else => @compileError("Can't remove pointer type from " ++ @typeName(T) ++ " as it is not a pointer type."),
-        }
-    }
-}
-
-test "NonNullable" {
-    const S = struct {
-        a: i32,
-        b: ?u64,
-        c: *const anyopaque,
-    };
-
-    try testing.expectEqual(NonOptional(?S), S);
 }
 
 test "NonError" {
@@ -58,6 +49,18 @@ test "NonError" {
     const T = NonError(ReturnType(foo));
 
     try testing.expectEqual(T, bool);
+}
+
+/// Returns new type that is no a pointer.
+pub inline fn NonPointer(comptime T: type) type {
+    comptime {
+        const type_info = @typeInfo(T);
+
+        switch (type_info) {
+            inline .Pointer => |ptr| return ptr.child,
+            else => @compileError("Can't remove pointer type from " ++ @typeName(T) ++ " as it is not a pointer type."),
+        }
+    }
 }
 
 test "NonPointer" {

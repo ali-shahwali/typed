@@ -51,7 +51,7 @@ test "NonError" {
     try testing.expectEqual(T, bool);
 }
 
-/// Returns new type that is no a pointer.
+/// Returns new type that is not a pointer.
 pub inline fn NonPointer(comptime T: type) type {
     comptime {
         const type_info = @typeInfo(T);
@@ -67,4 +67,16 @@ test "NonPointer" {
     const T = *i32;
 
     try testing.expectEqual(NonPointer(T), i32);
+}
+
+pub inline fn Is(comptime v: anytype, comptime T: type) bool {
+    comptime {
+        return @TypeOf(v) == T;
+    }
+}
+
+test "Is" {
+    const a: *i32 = undefined;
+
+    try testing.expect(Is(a, *i32));
 }

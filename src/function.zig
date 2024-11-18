@@ -4,11 +4,10 @@ const Type = std.builtin.Type;
 
 inline fn withoutError(comptime ty: Type) Type {
     comptime {
-        if (ty == .ErrorUnion) {
-            return @typeInfo(ty.ErrorUnion.payload);
-        } else {
-            return ty;
-        }
+        return switch (ty) {
+            inline .ErrorUnion => @typeInfo(ty.ErrorUnion.payload),
+            else => ty,
+        };
     }
 }
 
@@ -105,4 +104,40 @@ test "ParamType" {
     try testing.expectEqual(ParamType(foo, 1), u32);
     try testing.expectEqual(ParamType(foo, 2), void);
     try testing.expectEqual(ParamType(foo, 3), S);
+}
+
+/// Returns the types of the parameters of `func`.
+pub inline fn Params(comptime func: anytype) []const Type {
+    comptime {
+        const type_info: Type = @typeInfo(@TypeOf(func));
+
+        assertIsFunctionType(type_info);
+
+        var params: []const Type = &[_]Type{};
+        for (type_info.Fn.params) |param| {
+            params = params ++ [_]Type{@typeInfo(param.type.?)};
+        }
+
+        return params;
+    }
+}
+
+test "Params" {
+    const S = struct {
+        a: i32,
+        b: u8,
+    };
+
+    const foo = (struct {
+        fn foo(a: i32, b: u32, c: void, d: S) void {
+            _ = a;
+            _ = b;
+            _ = c;
+            _ = d;
+        }
+    }).foo;
+
+    const params = Params(foo);
+
+    try testing.expectEqual(params.len, 4);
 }

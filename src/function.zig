@@ -5,7 +5,7 @@ const Type = std.builtin.Type;
 inline fn withoutError(comptime ty: Type) Type {
     comptime {
         return switch (ty) {
-            inline .ErrorUnion => @typeInfo(ty.ErrorUnion.payload),
+            inline .error_union => @typeInfo(ty.ErrorUnion.payload),
             else => ty,
         };
     }
@@ -14,7 +14,7 @@ inline fn withoutError(comptime ty: Type) Type {
 inline fn assertIsFunctionType(comptime ty: Type) void {
     comptime {
         const unwrapped = withoutError(ty);
-        if (unwrapped != .Fn) {
+        if (unwrapped != .@"fn") {
             @compileError("Used function type util on non-function type " ++ @typeName(@Type(ty)));
         }
     }
@@ -28,7 +28,7 @@ pub inline fn ReturnType(comptime func: anytype) type {
 
         assertIsFunctionType(type_info);
 
-        return type_info.Fn.return_type orelse {
+        return type_info.@"fn".return_type orelse {
             @compileError("Function has no return type. This should not be possible but is possible due to the current Zig spec.");
         };
     }
@@ -75,10 +75,10 @@ pub inline fn ParamType(comptime func: anytype, comptime param_idx: usize) type 
 
         assertIsFunctionType(type_info);
 
-        if (type_info.Fn.params.len < param_idx) {
+        if (type_info.@"fn".params.len < param_idx) {
             @compileError("'param_idx' out of bounds.");
         } else {
-            return type_info.Fn.params[param_idx].type orelse {
+            return type_info.@"fn".params[param_idx].type orelse {
                 @compileError("Function without params has no param type.");
             };
         }
@@ -114,7 +114,7 @@ pub inline fn Params(comptime func: anytype) []const Type {
         assertIsFunctionType(type_info);
 
         var params: []const Type = &[_]Type{};
-        for (type_info.Fn.params) |param| {
+        for (type_info.@"fn".params) |param| {
             params = params ++ [_]Type{@typeInfo(param.type.?)};
         }
 

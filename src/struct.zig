@@ -6,7 +6,7 @@ const NonPointer = @import("type.zig").NonPointer;
 
 inline fn assertIsStructType(comptime ty: Type) void {
     comptime {
-        if (ty != .Struct) {
+        if (ty != .@"struct") {
             @compileError("Can not use struct type util on non-struct type " ++ @typeName(@Type(ty)));
         }
     }
@@ -16,7 +16,7 @@ inline fn getField(comptime T: type, comptime field: meta.FieldEnum(T)) Type.Str
     comptime {
         const type_info = @typeInfo(T);
         switch (type_info) {
-            inline .Struct => |s| {
+            inline .@"struct" => |s| {
                 for (s.fields) |f| {
                     if (std.mem.eql(u8, f.name, @tagName(field))) return f;
                 }
@@ -34,11 +34,11 @@ pub inline fn Partial(comptime T: type) type {
         assertIsStructType(type_info);
 
         switch (type_info) {
-            inline .Struct => |s| {
+            inline .@"struct" => |s| {
                 var optional_fields: []const Type.StructField = &[_]Type.StructField{};
                 for (s.fields) |field| {
                     const OptionalType = switch (@typeInfo(field.type)) {
-                        .Optional => field.type,
+                        .optional => field.type,
                         else => ?field.type,
                     };
                     const default_value: OptionalType = null;
@@ -47,13 +47,13 @@ pub inline fn Partial(comptime T: type) type {
                         .name = field.name,
                         .type = OptionalType,
                         .is_comptime = false,
-                        .default_value = @alignCast(@ptrCast(&default_value)),
+                        .default_value_ptr = @alignCast(@ptrCast(&default_value)),
                     }};
 
                     optional_fields = optional_fields ++ optional_field;
                 }
 
-                return @Type(Type{ .Struct = .{
+                return @Type(Type{ .@"struct" = .{
                     .backing_integer = s.backing_integer,
                     .decls = &[_]Type.Declaration{},
                     .fields = optional_fields,
@@ -76,12 +76,12 @@ test "Partial" {
     const type_info = @typeInfo(Partial(S));
 
     switch (type_info) {
-        .Struct => |s| {
+        .@"struct" => |s| {
             comptime {
                 for (s.fields) |field| {
                     const field_type_info = @typeInfo(field.type);
 
-                    try testing.expect(field_type_info == .Optional);
+                    try testing.expect(field_type_info == .optional);
                 }
             }
         },
@@ -97,13 +97,13 @@ pub inline fn Pick(comptime T: type, comptime fields: []const meta.FieldEnum(T))
         assertIsStructType(type_info);
 
         switch (type_info) {
-            inline .Struct => |s| {
+            inline .@"struct" => |s| {
                 var picked_fields: []const Type.StructField = &[_]Type.StructField{};
 
                 for (fields) |field|
                     picked_fields = picked_fields ++ [1]Type.StructField{getField(T, field)};
 
-                return @Type(Type{ .Struct = .{
+                return @Type(Type{ .@"struct" = .{
                     .backing_integer = s.backing_integer,
                     .decls = &[_]Type.Declaration{},
                     .fields = picked_fields,
@@ -138,7 +138,7 @@ pub inline fn Omit(comptime T: type, comptime fields: []const meta.FieldEnum(T))
         assertIsStructType(type_info);
 
         switch (type_info) {
-            inline .Struct => |s| {
+            inline .@"struct" => |s| {
                 var remaining_fields: []const Type.StructField = &[_]Type.StructField{};
 
                 for (s.fields) |field| {
@@ -156,7 +156,7 @@ pub inline fn Omit(comptime T: type, comptime fields: []const meta.FieldEnum(T))
                     remaining_fields = remaining_fields ++ f;
                 }
 
-                return @Type(Type{ .Struct = .{
+                return @Type(Type{ .@"struct" = .{
                     .backing_integer = s.backing_integer,
                     .decls = &[_]Type.Declaration{},
                     .fields = remaining_fields,
@@ -188,7 +188,7 @@ pub inline fn Record(comptime Keys: type, comptime V: type) type {
     comptime {
         const type_info = @typeInfo(Keys);
         switch (type_info) {
-            .Enum => |enum_type| {
+            .@"enum" => |enum_type| {
                 var fields: []const Type.StructField = &[_]Type.StructField{};
                 for (enum_type.fields) |ef| {
                     const default_value: V = undefined;
@@ -197,20 +197,20 @@ pub inline fn Record(comptime Keys: type, comptime V: type) type {
                         .name = ef.name,
                         .type = V,
                         .is_comptime = false,
-                        .default_value = @alignCast(@ptrCast(&default_value)),
+                        .default_value_ptr = @alignCast(@ptrCast(&default_value)),
                     }};
 
                     fields = fields ++ field;
                 }
 
-                return @Type(Type{ .Struct = .{
+                return @Type(Type{ .@"struct" = .{
                     .decls = &[_]Type.Declaration{},
                     .fields = fields,
                     .is_tuple = false,
                     .layout = .auto,
                 } });
             },
-            .Union => |union_type| {
+            .@"union" => |union_type| {
                 var fields: []const Type.StructField = &[_]Type.StructField{};
                 for (union_type.fields) |uf| {
                     const default_value: V = undefined;

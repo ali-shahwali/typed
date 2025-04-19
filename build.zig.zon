@@ -1,6 +1,7 @@
 .{
-    .name = "typed",
+    .name = .typed,
     .version = "0.0.1",
+    .fingerprint = 0xdae30cf7d16797a4,
     .dependencies = .{},
     .paths = .{
         "build.zig",

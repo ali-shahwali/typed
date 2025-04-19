@@ -80,3 +80,39 @@ test "Is" {
 
     try testing.expect(Is(a, *i32));
 }
+
+/// Returns a new unsigned integer type which is the number of bits it takes to store the number of bits of T.
+/// Examples:
+/// LogBits(u256) -> u8
+/// LogBits(i32) -> u5
+pub inline fn LogBits(comptime T: type) type {
+    comptime {
+        return @Type(
+            std.builtin.Type{
+                .int = .{
+                    .bits = std.math.log2(@typeInfo(T).int.bits),
+                    .signedness = .unsigned,
+                },
+            },
+        );
+    }
+}
+
+test "LogBits" {
+    try testing.expectEqual(u8, LogBits(u256));
+    try testing.expectEqual(u8, LogBits(i256));
+    try testing.expectEqual(u7, LogBits(u128));
+    try testing.expectEqual(u7, LogBits(i128));
+    try testing.expectEqual(u6, LogBits(u64));
+    try testing.expectEqual(u6, LogBits(i64));
+    try testing.expectEqual(u5, LogBits(u32));
+    try testing.expectEqual(u5, LogBits(i32));
+    try testing.expectEqual(u4, LogBits(u16));
+    try testing.expectEqual(u4, LogBits(i16));
+    try testing.expectEqual(u3, LogBits(u8));
+    try testing.expectEqual(u3, LogBits(i8));
+    try testing.expectEqual(u2, LogBits(u4));
+    try testing.expectEqual(u2, LogBits(i4));
+    try testing.expectEqual(u1, LogBits(u2));
+    try testing.expectEqual(u1, LogBits(i2));
+}

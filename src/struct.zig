@@ -15,6 +15,7 @@ inline fn assertIsStructType(comptime ty: Type) void {
 inline fn getField(comptime T: type, comptime field: meta.FieldEnum(T)) Type.StructField {
     comptime {
         const type_info = @typeInfo(T);
+        assertIsStructType(type_info);
         switch (type_info) {
             inline .@"struct" => |s| {
                 for (s.fields) |f| {

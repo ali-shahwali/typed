@@ -2,19 +2,9 @@ const std = @import("std");
 const testing = std.testing;
 const Type = std.builtin.Type;
 
-inline fn withoutError(comptime ty: Type) Type {
-    comptime {
-        return switch (ty) {
-            inline .error_union => @typeInfo(ty.ErrorUnion.payload),
-            else => ty,
-        };
-    }
-}
-
 inline fn assertIsFunctionType(comptime ty: Type) void {
     comptime {
-        const unwrapped = withoutError(ty);
-        if (unwrapped != .@"fn") {
+        if (ty != .@"fn") {
             @compileError("Used function type util on non-function type " ++ @typeName(@Type(ty)));
         }
     }

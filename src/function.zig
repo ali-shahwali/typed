@@ -11,10 +11,9 @@ inline fn assertIsFunctionType(comptime ty: Type) void {
 }
 
 /// Returns return type of `func`.
-/// If it has no return type, assumes its the same as the first param type.
 pub inline fn ReturnType(comptime func: anytype) type {
     comptime {
-        const type_info: Type = @typeInfo(@TypeOf(func));
+        const type_info = @typeInfo(@TypeOf(func));
 
         assertIsFunctionType(type_info);
 
@@ -61,7 +60,7 @@ test "ReturnType_with_ErrorUnion_and_Optional" {
 /// Returns the type of the parameter of `func` at index `param_idx`.
 pub inline fn ParamType(comptime func: anytype, comptime param_idx: usize) type {
     comptime {
-        const type_info: Type = @typeInfo(@TypeOf(func));
+        const type_info = @typeInfo(@TypeOf(func));
 
         assertIsFunctionType(type_info);
 
@@ -99,7 +98,7 @@ test "ParamType" {
 /// Returns the types of the parameters of `func`.
 pub inline fn Params(comptime func: anytype) []const Type {
     comptime {
-        const type_info: Type = @typeInfo(@TypeOf(func));
+        const type_info = @typeInfo(@TypeOf(func));
 
         assertIsFunctionType(type_info);
 

@@ -1,7 +1,6 @@
 const std = @import("std");
 const ReturnType = @import("function.zig").ReturnType;
 const testing = std.testing;
-const Type = std.builtin.Type;
 
 /// Returns new type that is not optional.
 pub inline fn NonOptional(comptime T: type) type {

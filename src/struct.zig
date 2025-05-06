@@ -2,7 +2,6 @@ const std = @import("std");
 const meta = std.meta;
 const testing = std.testing;
 const Type = std.builtin.Type;
-const NonPointer = @import("type.zig").NonPointer;
 
 inline fn assertIsStructType(comptime ty: Type) void {
     comptime {
@@ -31,9 +30,7 @@ inline fn getField(comptime T: type, comptime field: meta.FieldEnum(T)) Type.Str
 pub inline fn Partial(comptime T: type) type {
     comptime {
         const type_info = @typeInfo(T);
-
         assertIsStructType(type_info);
-
         switch (type_info) {
             inline .@"struct" => |s| {
                 var optional_fields: []const Type.StructField = &[_]Type.StructField{};
@@ -233,7 +230,7 @@ pub inline fn Record(comptime Keys: type, comptime V: type) type {
                     .layout = .auto,
                 } });
             },
-            else => @compileError("expected enum type for keys"),
+            else => @compileError("expected enum or union type for keys"),
         }
     }
 }
@@ -242,7 +239,7 @@ test "Record" {
     const S = struct {
         a: i32,
         b: ?u64 = 2,
-        c: *const anyopaque = undefined,
+        c: ?*const anyopaque = null,
     };
 
     const Keys = enum {
@@ -261,6 +258,6 @@ test "Record" {
     try testing.expectEqual(x.world.a, 2);
     try testing.expectEqual(x.hello.b, 2);
     try testing.expectEqual(x.world.b, 2);
-    try testing.expectEqual(x.hello.c, undefined);
-    try testing.expectEqual(x.world.c, undefined);
+    try testing.expectEqual(x.hello.c, null);
+    try testing.expectEqual(x.world.c, null);
 }

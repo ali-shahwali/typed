@@ -5,23 +5,21 @@ pub fn build(b: *std.Build) void {
 
     const optimize = b.standardOptimizeOption(.{});
 
-    _ = b.addModule("typed", .{
-        .root_source_file = b.path("src/root.zig"),
-    });
-
-    const lib = b.addStaticLibrary(.{
-        .name = "typed",
+    const typed_mod = b.addModule("typed", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
+    });
+
+    const lib = b.addLibrary(.{
+        .name = "typed",
+        .root_module = typed_mod,
     });
 
     b.installArtifact(lib);
 
     const lib_unit_tests = b.addTest(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = typed_mod,
     });
 
     const run_lib_unit_tests = b.addRunArtifact(lib_unit_tests);
